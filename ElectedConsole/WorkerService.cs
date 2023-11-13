@@ -8,14 +8,15 @@ public sealed class WorkerService : BackgroundService
 {
     private readonly ILogger<WorkerService> _logger;
     private readonly IZooKeeperClient _zooKeeperClient;
+    private readonly Setting _setting;
     private readonly string _name;
 
-    public WorkerService(ILogger<WorkerService> logger, IZooKeeperClient zooKeeperClient)
+    public WorkerService(ILogger<WorkerService> logger, IZooKeeperClient zooKeeperClient, Setting setting)
     {
         _logger = logger;
         _zooKeeperClient = zooKeeperClient;
-        TextGenerator ng = new TextGenerator(WordTypes.Name);
-        _name = ng.GenerateWord(10);
+        _setting = setting;
+        _name = setting.Name;
     }
 
     protected override async Task ExecuteAsync(CancellationToken token)
@@ -23,9 +24,9 @@ public sealed class WorkerService : BackgroundService
         while (!token.IsCancellationRequested)
         {
             if (await _zooKeeperClient.CheckLeaderAsync(_name))
-                _logger.LogInformation($"Processing... {DateTime.Now}");
+                _logger.LogInformation($"{_name}:{_setting.RootNode} is processing... {DateTime.Now}");
 
-            await Task.Delay(1000, token);
+            await Task.Delay(3000, token);
         }
     }
 }
